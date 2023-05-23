@@ -4,59 +4,75 @@ import requests
 
 from flask import Flask, request
 from github import Github, GithubIntegration
-
+from connection import get_connection
+from release import Release
+from pull_request import PR
+from branch import Branch
+from action import Action
+import json
+from db import db
 
 app = Flask(__name__)
 # MAKE SURE TO CHANGE TO YOUR APP NUMBER!!!!!
-app_id=335683
-# Read the bot certificate
-with open(
-        os.path.normpath(os.path.expanduser('./test-pr-labeler.2023-05-18.private-key.pom')),
-        'r'
-) as cert_file:
-    app_key = cert_file.read()
 
-# Create an GitHub integration instance
-git_integration = GithubIntegration(
-    app_id,
-    app_key,
-)
+
+
+
+def create_new_branch_with_diffs(repo, base_branch, head_branch, release_branch_name):
+    commit_diff = compare_branches(repo, base_branch, head_branch).commits
+    release_branch = repo.get_branch(release_branch_name)
+    new_branch = repo.create_git_ref(ref='refs/heads/' + head_branch + "_downport", sha=release_branch.commit.sha)
+    
+
+def create_pr_for_release_branch(current_pr, repo, title, head_branch, base_branch):
+    new_branch_name = create_new_branch_with_diffs(repo, head_branch, base_branch, get_latest_major_release_branch())
+    new_pr = repo.create_pull(title=title + " - VP CHERRY-PICK", body="", head=head_branch, base=base_branch)
+    current_pr.create_comment("Created new PR for the release branch " + new_pr.html_url)
+
+
 
 
 @app.route("/", methods=['POST'])
 def bot():
     # Get the event payload
     payload = request.json
-
-    # Check if the event is a GitHub PR creation event
-    if not all(k in payload.keys() for k in ['action', 'pull_request']) and \
-            payload['action'] == 'opened':
-        return "ok"
-
+    json_payload = request.get_json()
+    json_formatted_str = json.dumps(json_payload, indent=2)
+    print(json_formatted_str)
+    action = Action(payload)
     owner = payload['repository']['owner']['login']
     repo_name = payload['repository']['name']
-
-    # Get a git connection as our bot
-    # Here is where we are getting the permission to talk as our bot and not
-    # as a Python webservice
-    git_connection = Github(
-        login_or_token=git_integration.get_access_token(
-            git_integration.get_installation(owner, repo_name).id
-        ).token
-    )
+    git_connection = get_connection(owner, repo_name)
     repo = git_connection.get_repo(f"{owner}/{repo_name}")
+    
+    # repo.create_check_run("test", "758b828ad5fd11bf71acae281d2025762fecf492", status="completed", conclusion="success")
+    # print("created check run")
+    if action.is_action_pr_opened():
+        print("New PR open. Tagging it.")
+        issue = repo.get_issue(number=payload['pull_request']['number'])
+        PR.create_tag_for_latest_major_release(issue, Release.get_latest_major_release_branch())
+    elif action.is_action_pr_labeled():
+        print("PR was labeled. Creating a new PR for the release branch")
+        issue = repo.get_issue(number=payload['pull_request']['number'])
+        PR.create_pr_for_release_branch(repo, payload['label']['name'], payload['pull_request']['base']['ref'], payload['pull_request']['head']['ref'], payload['pull_request']['title'], issue)
+    elif action.is_action_pr_unlabeled():
+        print("Label deleted. Rolling back the opened PR.")
+        Branch.delete_downport_branch_from_label(repo, payload['pull_request']['number'], payload['label']['name'])
+    elif action.is_action_sync():
+        print("Source branch was changed. Syncing the downport branches.")
+        
 
-    issue = repo.get_issue(number=payload['pull_request']['number'])
+    
+    # if payload['action'] == 'labeled' and 'pull_request' in list(payload.keys()):
+    #     print("Creating PR")
+    #     # print(payload['label'])
+    #     
+    #     create_pr_for_release_branch(issue, repo, payload['pull_request']['title'],  payload['pull_request']['head']['ref'], payload['label']['name'])
+        
+    #     create_pr_for_branch(issue)
+    # # if payload.
 
-    # Call meme-api to get a random meme
-    response = requests.get(url='https://meme-api.herokuapp.com/gimme')
-    if response.status_code != 200:
-        return 'ok'
 
-    # Get the best resolution meme
-    meme_url = response.json()['preview'][-1]
-    # Create a comment with the random meme
-    issue.create_comment(f"![Alt Text]({meme_url})")
     return "ok"
 
 

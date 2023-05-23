@@ -1,0 +1,5 @@
+*.pom
+log*
+db.db
+*.json
+__pycache__
