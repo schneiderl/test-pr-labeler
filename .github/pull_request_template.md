@@ -49,6 +49,14 @@ https://everlong.atlassian.net/browse/JIRA-0000
 - [ ] Breaking change ([playbook](https://everlong.atlassian.net/wiki/spaces/LSDK/pages/3711500736/Breaking+Changes+Guidelines) | fix or feature that would cause existing functionality to change)
 - [ ] New feature flag(s) ([Guidelines](https://everlong.atlassian.net/wiki/spaces/TECH/pages/4350378339/Feature+Flag+Guidelines))
 
+## Release Notes
+
+Briefly describe your updates in a way that is easy for our customers (external integrators) to understand. Refer to the [Writing Release Notes Guidelines](https://everlong.atlassian.net/wiki/spaces/REL/pages/5065441305/Writing+release+notes+-+guidelines)
+
+<!---REL_BOT_IDENTIFIER-->
+- Your release notes here
+<!---DO_NOT_DELETE-->
+
 ## Checklist for Assignee
 
 <!--- Go over all the following points, and put an `x` in all the boxes that apply. -->
@@ -62,9 +70,11 @@ https://everlong.atlassian.net/browse/JIRA-0000
 - [ ] My change requires a change to the documentation ([playbook](https://everlong.atlassian.net/wiki/spaces/LSDK/pages/4039410157/SDK+Documentation+Playbook)).
 - [ ] I have updated the documentation accordingly.
 - [ ] I have reviewed the [Feature Flag Guidelines](https://everlong.atlassian.net/wiki/spaces/TECH/pages/4350378339/Feature+Flag+Guidelines) and followed the appropriate conventions.
+- [ ] I wrote the release notes following the [Writing Release Notes Guidelines](https://everlong.atlassian.net/wiki/spaces/REL/pages/5065441305/Writing+release+notes+-+guidelines)
 
 ## Checklist for Reviewers
 
 <!--- Go over all the following points, and put an `x` in all the boxes that apply. -->
 
 - [ ] I have reviewed the [Reviewer Guidelines](https://everlong.atlassian.net/wiki/spaces/TECH/pages/12724534/Code+Review+Guidelines#Reviewer-checklist)
+- [ ] I have reviewed the Release Notes in the pull request body
